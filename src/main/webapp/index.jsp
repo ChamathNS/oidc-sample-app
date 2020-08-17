@@ -55,6 +55,18 @@
                 <input type="submit" value="log in" style="height: 30px; width: 60px">
             </div>
         </form>
+
+        <div class="element-padding">
+            <fieldset>
+                <legend>Login with your Claimed OpenID URI</legend>
+                <form action="openid" method="post">
+                    <div align="center">
+                        <input type="text" name="OpenId.ClaimedId" size="30"/> <input type="submit" name="login" value="Login"/>
+                    </div>
+                </form>
+            </fieldset>
+        </div>
+
     </div>
 </main>
 </body>

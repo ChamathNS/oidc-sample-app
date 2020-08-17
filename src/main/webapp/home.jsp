@@ -23,6 +23,12 @@
   Time: 21:26
   To change this template use File | Settings | File Templates.
 --%>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Iterator" %>
+<%@ page import="org.wso2.carbon.identity.sso.agent.bean.LoggedInSessionBean" %>
+<%@ page import="org.wso2.carbon.identity.sso.agent.bean.SSOAgentConfig" %>
+<%@ page import="org.wso2.carbon.identity.sso.agent.util.SSOAgentConstants" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
@@ -49,7 +55,44 @@
         }
     </style>
 </head>
-
+<%
+    String claimedId = null;
+    Map<String, List<String>> openIdAttributes = null;
+    if(request.getSession(false) != null &&
+            request.getSession(false).getAttribute(SSOAgentConstants.SESSION_BEAN_NAME) == null){
+        request.getSession().invalidate();
+%>
+<script type="text/javascript">
+    location.href = "index.jsp";
+</script>
+<%
+        return;
+    }
+    SSOAgentConfig ssoAgentConfig = (SSOAgentConfig)getServletContext().getAttribute(SSOAgentConstants.CONFIG_BEAN_NAME);
+    LoggedInSessionBean sessionBean = (LoggedInSessionBean)session.getAttribute(SSOAgentConstants.SESSION_BEAN_NAME);
+    LoggedInSessionBean.AccessTokenResponseBean accessTokenResponseBean = null;
+    
+    if(sessionBean != null){
+        if(sessionBean.getOpenId() != null) {
+            claimedId = sessionBean.getOpenId().getClaimedId();
+            openIdAttributes = sessionBean.getOpenId().getSubjectAttributes();
+        } else {
+%>
+<script type="text/javascript">
+    location.href = "index.jsp";
+</script>
+<%
+        return;
+    }
+} else {
+%>
+<script type="text/javascript">
+    location.href = "index.jsp";
+</script>
+<%
+        return;
+    }
+%>
 <body>
 <main class="center-segment">
     <div style="text-align: center">
@@ -58,7 +101,7 @@
         </div>
 
         <div class="element-padding">
-            <a href="/OIDCSampleApp/index.html">Logout</a>
+            <a href="https://localhost:9443/oidc/logout?post_logout_redirect_uri=http://localhost:8080/index.html">Logout</a>
         </div>
     </div>
 </main>

@@ -13,13 +13,29 @@
         <finalName>OIDCSampleApp</finalName>
     </build>
 
+    <repositories>
+        <repository>
+            <id>wso2.releases</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
+            <groupId>org.wso2.carbon.identity.agent.sso.java</groupId>
+            <artifactId>org.wso2.carbon.identity.sso.agent</artifactId>
+            <version>${sso.agent.version}</version>
         </dependency>
     </dependencies>
+
+    <properties>
+        <sso.agent.version>5.5.5</sso.agent.version>
+    </properties>
 
 </project>
