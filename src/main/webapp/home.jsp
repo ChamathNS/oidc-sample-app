@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
 <%--
   ~ Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
   ~
@@ -16,20 +18,59 @@
   ~ under the License.
   --%>
 
-<%--
-  Created by IntelliJ IDEA.
-  User: chamaths
-  Date: 7/27/20
-  Time: 21:26
-  To change this template use File | Settings | File Templates.
---%>
+<%@page import="com.nimbusds.jwt.ReadOnlyJWTClaimsSet" %>
+<%@page import="com.nimbusds.jwt.SignedJWT" %>
+<%@page import="com.sample.OAuth2Constants" %>
+<%@page import="com.sample.SampleContextEventListener" %>
+<%@page import="com.sample.claims.ClaimManagerProxy" %>
+<%@page import="org.json.JSONObject" %>
+<%@page import="java.util.ArrayList" %>
+<%@page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="java.util.Iterator" %>
-<%@ page import="org.wso2.carbon.identity.sso.agent.bean.LoggedInSessionBean" %>
-<%@ page import="org.wso2.carbon.identity.sso.agent.bean.SSOAgentConfig" %>
-<%@ page import="org.wso2.carbon.identity.sso.agent.util.SSOAgentConstants" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.util.Properties" %>
+
+<%
+    final HttpSession currentSession = request.getSession(false);
+    
+    if (currentSession == null || currentSession.getAttribute("authenticated") == null) {
+        // A direct access to home. Must redirect to index
+        response.sendRedirect("index.jsp");
+        return;
+    }
+    
+    final Properties properties = SampleContextEventListener.getProperties();
+    final String sessionState = (String) currentSession.getAttribute(OAuth2Constants.SESSION_STATE);
+    
+    final JSONObject requestObject = (JSONObject) currentSession.getAttribute("requestObject");
+    final JSONObject responseObject = (JSONObject) currentSession.getAttribute("responseObject");
+    
+    final String idToken = (String) currentSession.getAttribute("idToken");
+    
+    String name = "";
+    
+    Map<String, Object> customClaimValueMap = new HashMap<>();
+    Map<String, String> oidcClaimDisplayValueMap = new HashMap();
+    
+    if (idToken != null) {
+        try {
+            name = SignedJWT.parse(idToken).getJWTClaimsSet().getSubject();
+            ReadOnlyJWTClaimsSet claimsSet = SignedJWT.parse(idToken).getJWTClaimsSet();
+            
+            ClaimManagerProxy claimManagerProxy =
+                    (ClaimManagerProxy) application.getAttribute("claimManagerProxyInstance");
+            
+            customClaimValueMap = claimsSet.getCustomClaims();
+            
+            oidcClaimDisplayValueMap =
+                    claimManagerProxy.getOidcClaimDisplayNameMapping(new ArrayList<>(customClaimValueMap.keySet()));
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+%>
+
 <html>
 <head>
     <title>Home</title>
@@ -37,71 +78,65 @@
         html, body {
             height: 100%;
         }
+        
         body {
             flex-direction: column;
             display: flex;
         }
+        
         main {
             flex-shrink: 0;
         }
+        
         main.center-segment {
             margin: auto;
             display: flex;
             align-items: center;
         }
+        
         .element-padding {
             margin: auto;
             padding: 15px;
         }
+        .center {
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 </head>
-<%
-    String claimedId = null;
-    Map<String, List<String>> openIdAttributes = null;
-    if(request.getSession(false) != null &&
-            request.getSession(false).getAttribute(SSOAgentConstants.SESSION_BEAN_NAME) == null){
-        request.getSession().invalidate();
-%>
-<script type="text/javascript">
-    location.href = "index.jsp";
-</script>
-<%
-        return;
-    }
-    SSOAgentConfig ssoAgentConfig = (SSOAgentConfig)getServletContext().getAttribute(SSOAgentConstants.CONFIG_BEAN_NAME);
-    LoggedInSessionBean sessionBean = (LoggedInSessionBean)session.getAttribute(SSOAgentConstants.SESSION_BEAN_NAME);
-    LoggedInSessionBean.AccessTokenResponseBean accessTokenResponseBean = null;
-    
-    if(sessionBean != null){
-        if(sessionBean.getOpenId() != null) {
-            claimedId = sessionBean.getOpenId().getClaimedId();
-            openIdAttributes = sessionBean.getOpenId().getSubjectAttributes();
-        } else {
-%>
-<script type="text/javascript">
-    location.href = "index.jsp";
-</script>
-<%
-        return;
-    }
-} else {
-%>
-<script type="text/javascript">
-    location.href = "index.jsp";
-</script>
-<%
-        return;
-    }
-%>
 <body>
 <main class="center-segment">
     <div style="text-align: center">
         <div class="element-padding">
             <h1>OIDC Sample App Home Page!</h1>
         </div>
-
+        
         <div class="element-padding">
-            <a href="https://localhost:9443/oidc/logout?post_logout_redirect_uri=http://localhost:8080/index.html">Logout</a>
+            <h1>Hi <%=name%></h1>
+        </div>
+        
+        <% if (!oidcClaimDisplayValueMap.isEmpty()) { %>
+        <div class="element-padding">
+            <div class="element-padding">
+                <h3 align="center">User Details</h3>
+            </div>
+            <table class="center">
+                <tbody>
+                <% for(String claim:oidcClaimDisplayValueMap.keySet()) { %>
+                <tr>
+                    <td><%=oidcClaimDisplayValueMap.get(claim)%></td>
+                    <td><%=customClaimValueMap.get(claim).toString()%> </td>
+                </tr>
+                <% } %>
+                </tbody>
+            </table>
+            <%  } else { %>
+            <p align="center">No user details Available. Configure SP Claim Configurations.</p>
+            <%  } %>
+        </div>
+        
+        <div class="element-padding">
+            <a href='<%=properties.getProperty("OIDC_LOGOUT_ENDPOINT")%>?post_logout_redirect_uri=<%=properties.getProperty("post_logout_redirect_uri")%>&id_token_hint=<%=idToken%>&session_state=<%=sessionState%>'>Logout</a>
         </div>
     </div>
 </main>

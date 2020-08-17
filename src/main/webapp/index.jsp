@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
 <!--
   ~ Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
   ~
@@ -15,8 +17,16 @@
   ~ specific language governing permissions and limitations
   ~ under the License.
   -->
-
-<!DOCTYPE html>
+<%
+    final HttpSession currentSession =  request.getSession(false);
+    if (currentSession != null
+            && currentSession.getAttribute("authenticated") != null
+            &&  (boolean)currentSession.getAttribute("authenticated")) {
+        // Logged in session. Direct to Home
+        response.sendRedirect("home.jsp");
+        return;
+    }
+%>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -49,24 +59,12 @@
         <h1>
             OIDC Sample App Log In Page!
         </h1>
-        <form method="post" action="/OIDCSampleApp/home.jsp">
+        <form method="post" action="oauth2-authorize-user.jsp?reset=true">
 
             <div class="element-padding">
                 <input type="submit" value="log in" style="height: 30px; width: 60px">
             </div>
         </form>
-
-        <div class="element-padding">
-            <fieldset>
-                <legend>Login with your Claimed OpenID URI</legend>
-                <form action="openid" method="post">
-                    <div align="center">
-                        <input type="text" name="OpenId.ClaimedId" size="30"/> <input type="submit" name="login" value="Login"/>
-                    </div>
-                </form>
-            </fieldset>
-        </div>
-
     </div>
 </main>
 </body>

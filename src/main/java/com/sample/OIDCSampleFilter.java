@@ -1,28 +1,49 @@
 package com.sample;
 
-import org.wso2.carbon.identity.sso.agent.OpenIdSSOAgentFilter;
-import org.wso2.carbon.identity.sso.agent.bean.SSOAgentConfig;
-import org.wso2.carbon.identity.sso.agent.util.SSOAgentConstants;
-
 import java.io.IOException;
 
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
-public class OIDCSampleFilter extends OpenIdSSOAgentFilter {
+public class OIDCSampleFilter implements Filter {
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
+    public void init(FilterConfig filterConfig) {
+
+    }
+
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
-        SSOAgentConfig config = (SSOAgentConfig)filterConfig.getServletContext()
-                .getAttribute(SSOAgentConstants.CONFIG_BEAN_NAME);
-        config.getOpenId().setClaimedId(servletRequest.getParameter(SSOAgentConstants.SSOAgentConfig.OpenID.CLAIMED_ID));
-        config.getOpenId().setMode(servletRequest.getParameter(SSOAgentConstants.OpenID.OPENID_MODE));
+        final HttpServletRequest req = (HttpServletRequest) request;
+        final HttpServletResponse res = (HttpServletResponse) response;
 
-        servletRequest.setAttribute(SSOAgentConstants.CONFIG_BEAN_NAME,config);
-        super.doFilter(servletRequest, servletResponse, chain);
+        if (checkOAuth(req)) {
+            chain.doFilter(request, response);
+        } else {
+            res.sendError(401);
+        }
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+
+    private static boolean checkOAuth(final HttpServletRequest request) {
+
+        final HttpSession currentSession = request.getSession(false);
+
+        return currentSession != null
+                && currentSession.getAttribute("authenticated") != null
+                && (boolean) currentSession.getAttribute("authenticated");
     }
 }

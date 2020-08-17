@@ -11,6 +11,16 @@
 
     <build>
         <finalName>OIDCSampleApp</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <repositories>
@@ -32,10 +42,16 @@
             <artifactId>org.wso2.carbon.identity.sso.agent</artifactId>
             <version>${sso.agent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbusds.version}</version>
+        </dependency>
     </dependencies>
 
     <properties>
         <sso.agent.version>5.5.5</sso.agent.version>
+        <nimbusds.version>2.26.1</nimbusds.version>
     </properties>
 
 </project>
